@@ -2,16 +2,20 @@
   <div id="home">
     <!-- 页头 -->
     <nav-bar class="home-nav"><div slot="center">品优购</div></nav-bar>
-    <!-- 轮播图 -->
-    <home-swiper :banners="banners"></home-swiper>
-    <!-- 爆款推荐 -->
-    <recommends :recommends="recommends"></recommends>
-    <!-- 流行款式 -->
-    <fashion-view></fashion-view>
-    <!-- 商品展示类别 -->
-    <tab-control :titles="['流行','新款','精选']" class="tab-control" @tabClick="tabClick"/>
-    <!-- 商品展示 -->
-    <goods-list :goods="showGoods"></goods-list>
+    <scroll class="wrappers">
+      <!-- 轮播图 -->
+      <home-swiper :banners="banners"></home-swiper>
+      <!-- 爆款推荐 -->
+      <recommends :recommends="recommends"></recommends>
+      <!-- 流行款式 -->
+      <fashion-view></fashion-view>
+      <!-- 商品展示类别 -->
+      <tab-control :titles="['流行','新款','精选']" class="tab-control" @tabClick="tabClick"/>
+      <!-- 商品展示 -->
+      <goods-list :goods="showGoods"></goods-list>
+    </scroll>
+ 
+    
   </div>
 </template>
 
@@ -25,6 +29,7 @@
   import NavBar from 'components/common/navbar/NavBar'
   import TabControl from 'components/content/tabControl/TabControl'
   import GoodsList from 'components/content/goods/GoodsList'
+  import Scroll from 'components/common/scroll/Scroll'
 
   // 网络请求模块
   import {getHomeData,getHomeGoods} from 'network/home'
@@ -37,7 +42,8 @@
       FashionView,
       NavBar,
       TabControl,
-      GoodsList
+      GoodsList,
+      Scroll
     },
     data () {
       return {
@@ -107,6 +113,7 @@
 <style scoped>
   #home {
     padding: 44px 0 49px;
+    height: 100vh;
   }
   .home-nav {
     background-color: var(--color-tint);
@@ -120,6 +127,10 @@
   .tab-control {
     position: sticky;
     top: 44px;
+    z-index: 9;
   }
- 
+  .wrappers { 
+    height: calc(100%);
+    overflow: hidden;
+  } 
 </style>

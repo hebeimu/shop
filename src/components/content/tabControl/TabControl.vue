@@ -40,7 +40,6 @@
     font-size: 15px;
     text-align: center;
     background: #fff;
-    z-index: 9;
   }
   .tab-control-item {
     flex: 1;
