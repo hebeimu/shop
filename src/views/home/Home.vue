@@ -2,7 +2,8 @@
   <div id="home">
     <!-- 页头 -->
     <nav-bar class="home-nav"><div slot="center">品优购</div></nav-bar>
-    <scroll class="wrappers">
+    <scroll class="wrappers" ref="scroll" :probeType="3" 
+    @scroll="contentScroll" :pullUpLoad="true" @pullingUp="loadMore">
       <!-- 轮播图 -->
       <home-swiper :banners="banners"></home-swiper>
       <!-- 爆款推荐 -->
@@ -10,12 +11,12 @@
       <!-- 流行款式 -->
       <fashion-view></fashion-view>
       <!-- 商品展示类别 -->
-      <tab-control :titles="['流行','新款','精选']" class="tab-control" @tabClick="tabClick"/>
+      <tab-control :titles="['流行','新款','精选']"  @tabClick="tabClick"/>
       <!-- 商品展示 -->
       <goods-list :goods="showGoods"></goods-list>
     </scroll>
- 
-    
+    <!-- 点击回到顶部 -->
+    <back-top @click.native="backTopClick" v-show="isShowBackTop"/>
   </div>
 </template>
 
@@ -30,9 +31,13 @@
   import TabControl from 'components/content/tabControl/TabControl'
   import GoodsList from 'components/content/goods/GoodsList'
   import Scroll from 'components/common/scroll/Scroll'
+  import BackTop from 'components/content/backTop/BackTop'
 
   // 网络请求模块
   import {getHomeData,getHomeGoods} from 'network/home'
+
+  // 工具类
+  import {debounce} from 'common/utils'
 
   export default {
     name: 'Home',
@@ -43,7 +48,8 @@
       NavBar,
       TabControl,
       GoodsList,
-      Scroll
+      Scroll,
+      BackTop
     },
     data () {
       return {
@@ -54,15 +60,23 @@
           new: {page: 0,list: []},
           sell: {page: 0,list: []},
         },
-        currentType: 'pop'
+        currentType: 'pop',
+        isShowBackTop: false
       }
     },
     created () {
-      // 调用网络请求方法
+      // 调用网络请求方法,请求商品数据
       this.getHomeData()
       this.getHomeGoods('pop')
       this.getHomeGoods('new')
       this.getHomeGoods('sell')
+    },
+    mounted () {
+      // 监听 GoodsListItem 中图片加载完成
+      const refresh = debounce(this.$refs.scroll.refresh, 50)
+      this.$bus.$on('itemImageLoad', () => {
+        refresh()
+      })
     },
     computed: {
       showGoods () {
@@ -87,6 +101,18 @@
             break
         }
       },
+      // 回到顶部事件
+      backTopClick () {
+        this.$refs.scroll.scrollTo(0, 0, 500)
+      },
+      // 监测页面滚动
+      contentScroll (position) {
+        this.isShowBackTop = Math.abs(position.y) >= 1000
+      },
+      // 上拉加载更多
+      loadMore() {
+        this.getHomeGoods(this.currentType)
+      },
 
       /**
        * 网络请求相关的方法
@@ -104,6 +130,9 @@
         getHomeGoods (type, page).then(res => {
           this.goods[type].list.push(...res.data.list)
           this.goods[type].page += 1
+
+          // 完成上拉加载更多
+          this.$refs.scroll.finishPullUp()
         })  
       }
     }
@@ -123,11 +152,6 @@
     top: 0;
     right: 0;
     z-index: 1;
-  }
-  .tab-control {
-    position: sticky;
-    top: 44px;
-    z-index: 9;
   }
   .wrappers { 
     height: calc(100%);
