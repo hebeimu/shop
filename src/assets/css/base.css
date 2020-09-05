@@ -27,7 +27,7 @@ body {
   -webkit-tap-highlight-color: transparent; /*webkit 是苹果浏览器引擎，tap 点击，highlight 
     背景高亮， clolor 颜色*/
   background: val(--color-background);
-  color: val(--color-text);
+  color: var(--color-text);
   width: 100vw;
 }
 

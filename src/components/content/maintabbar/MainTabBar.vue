@@ -1,6 +1,8 @@
 <template>
   <div>
-    <keep-alive><router-view></router-view></keep-alive>
+    <keep-alive exclude="Detail">
+      <router-view></router-view>
+    </keep-alive>
     
     <tab-bar>
       <tab-bar-item path='/home' activeColor='red'>

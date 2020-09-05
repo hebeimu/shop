@@ -2,16 +2,17 @@
   <div id="home">
     <!-- 页头 -->
     <nav-bar class="home-nav"><div slot="center">品优购</div></nav-bar>
+    <tab-control :titles="['流行','新款','精选']"  @tabClick="tabClick" ref="tabControls" v-show="isShow"/>
     <scroll class="wrappers" ref="scroll" :probeType="3" 
     @scroll="contentScroll" :pullUpLoad="true" @pullingUp="loadMore">
       <!-- 轮播图 -->
-      <home-swiper :banners="banners"></home-swiper>
+      <home-swiper :banners="banners" @ImageLoad="ImageLoad"/>
       <!-- 爆款推荐 -->
-      <recommends :recommends="recommends"></recommends>
+      <recommends :recommends="recommends"/>
       <!-- 流行款式 -->
       <fashion-view></fashion-view>
       <!-- 商品展示类别 -->
-      <tab-control :titles="['流行','新款','精选']"  @tabClick="tabClick"/>
+      <tab-control :titles="['流行','新款','精选']"  @tabClick="tabClick" ref="tabControl" v-show="!isShow"/>
       <!-- 商品展示 -->
       <goods-list :goods="showGoods"></goods-list>
     </scroll>
@@ -31,13 +32,16 @@
   import TabControl from 'components/content/tabControl/TabControl'
   import GoodsList from 'components/content/goods/GoodsList'
   import Scroll from 'components/common/scroll/Scroll'
-  import BackTop from 'components/content/backTop/BackTop'
+  
 
   // 网络请求模块
   import {getHomeData,getHomeGoods} from 'network/home'
 
-  // 工具类
-  import {debounce} from 'common/utils'
+  // 混入模块
+  import {itemListenerMixin,backTopMixin} from 'common/mixin' 
+
+  // 导入常量
+  import {BACK_POSITION} from 'common/const'
 
   export default {
     name: 'Home',
@@ -48,8 +52,7 @@
       NavBar,
       TabControl,
       GoodsList,
-      Scroll,
-      BackTop
+      Scroll
     },
     data () {
       return {
@@ -61,9 +64,11 @@
           sell: {page: 0,list: []},
         },
         currentType: 'pop',
-        isShowBackTop: false
+        taboffsetTop: 0,
+        isShow: false
       }
     },
+    mixins: [itemListenerMixin,backTopMixin],
     created () {
       // 调用网络请求方法,请求商品数据
       this.getHomeData()
@@ -71,12 +76,10 @@
       this.getHomeGoods('new')
       this.getHomeGoods('sell')
     },
-    mounted () {
-      // 监听 GoodsListItem 中图片加载完成
-      const refresh = debounce(this.$refs.scroll.refresh, 50)
-      this.$bus.$on('itemImageLoad', () => {
-        refresh()
-      })
+
+    // 离开组件的事件周期函数，前提是被 keep-alive 包裹的组件
+    deactivated () {
+      this.$bus.$off('itemImageLoad', this.itemImaListener)
     },
     computed: {
       showGoods () {
@@ -100,18 +103,23 @@
             this.currentType = 'sell'
             break
         }
+        this.$refs.tabControl.currentindex = index
+        this.$refs.tabControls.currentindex = index
       },
-      // 回到顶部事件
-      backTopClick () {
-        this.$refs.scroll.scrollTo(0, 0, 500)
-      },
+     
       // 监测页面滚动
       contentScroll (position) {
-        this.isShowBackTop = Math.abs(position.y) >= 1000
+        this.isShowBackTop = Math.abs(position.y) >= BACK_POSITION
+        
+        this.isShow = Math.abs(position.y) >= this.taboffsetTop - 44
       },
       // 上拉加载更多
       loadMore() {
         this.getHomeGoods(this.currentType)
+      },
+      // 检测轮播图加载完成，获取吸顶导航距离顶部距离
+      ImageLoad () {
+        this.taboffsetTop = this.$refs.tabControl.$el.offsetTop
       },
 
       /**
